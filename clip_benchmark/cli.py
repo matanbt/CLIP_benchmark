@@ -36,7 +36,7 @@ def get_parser_args():
     mutually_exclusive.add_argument('--val_split', default=None, type=str, nargs="+", help="Dataset(s) validation split names. Mutually exclusive with val_proportion.")
     mutually_exclusive.add_argument('--val_proportion', default=None, type=float, nargs="+", help="what is the share of the train dataset will be used for validation part, if it doesn't predefined. Mutually exclusive with val_split")
     parser_eval.add_argument('--model', type=str, nargs="+", default=["ViT-B-32-quickgelu"], help="Model architecture to use from OpenCLIP")
-    parser_eval.add_argument('--pretrained', type=str, nargs="+", default=["laion400m_e32"], help="Model checkpoint name to use from OpenCLIP")
+    parser_eval.add_argument('--pretrained', type=str, nargs="+", default=[], help="Model checkpoint name to use from OpenCLIP")
     parser_eval.add_argument('--pretrained_model', type=str, default="", nargs="+", help="Pre-trained model(s) to use. Can be the full model name where `model` and `pretrained` are comma separated (e.g., --pretrained_model='ViT-B-32-quickgelu,laion400m_e32'), a model collection name ('openai' or 'openclip_base' or 'openclip_multilingual' or 'openclip_all'), or path of a text file where each line is a model fullname where model and pretrained are comma separated (e.g., ViT-B-32-quickgelu,laion400m_e32). --model and --pretrained are ignored if --pretrained_model is used.")
     parser_eval.add_argument('--task', type=str, default="auto", choices=["zeroshot_classification", "zeroshot_retrieval", "linear_probe", "captioning", "image_caption_selection", "auto"], help="Task to evaluate on. With --task=auto, the task is automatically inferred from the dataset.")
     parser_eval.add_argument('--no_amp', action="store_false", dest="amp", default=True, help="whether to use mixed precision")
@@ -257,11 +257,11 @@ def run(args):
             device=args.device
         )
         model.eval()
-        if args.model.count("nllb-clip") > 0:
-            # for NLLB-CLIP models, we need to set the language prior to running the tests
-            from clip_benchmark.models.nllb_clip import set_language
-
-            set_language(tokenizer, args.language)
+        # if args.model.count("nllb-clip") > 0:
+        #     # for NLLB-CLIP models, we need to set the language prior to running the tests
+        #     from clip_benchmark.models.nllb_clip import set_language
+        #
+        #     set_language(tokenizer, args.language)
         dataset = build_dataset(
             dataset_name=args.dataset, 
             root=dataset_root, 
