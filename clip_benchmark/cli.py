@@ -417,7 +417,7 @@ def run(args):
     if args.verbose:
         print(f"Dump results to: {output}")
     with open(output, "w") as f:
-        json.dump(dump, f)
+        json.dump(dump, f, indent=2)
     return 0
 
 
