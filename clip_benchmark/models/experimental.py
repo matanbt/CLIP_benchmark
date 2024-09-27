@@ -51,7 +51,7 @@ def load_experimental_models(
 
 # Define the named functions to replace the local objects
 def transform(x, target_processor):
-    return target_processor(images=x, return_tensors="pt")
+    return target_processor(images=x, return_tensors="pt")['pixel_values'].squeeze(0)
 
 
 def tokenize(x, tokenizer):
@@ -86,12 +86,13 @@ class CombinedModel(nn.Module):
 
     def encode_image(self, x):
         # target model will always embed the image
-        img = x['pixel_values']
+        # img = x['pixel_values']
         # Ensure the input tensor has the correct shape
-        if len(img.shape) == 5 and img.shape[1] == 1:
-            img = img.squeeze(1)  # Remove the extra dimension
-        x['pixel_values'] = img
-        return self.target_model.get_image_features(**x)
+        # if len(img.shape) == 5 and img.shape[1] == 1:
+        #     img = img.squeeze(1)  # Remove the extra dimension
+        # x['pixel_values'] = img
+
+        return self.target_model.get_image_features(pixel_values=x)
 
     def forward(self, x):
         raise NotImplementedError
