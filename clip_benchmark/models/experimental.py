@@ -98,6 +98,7 @@ class CombinedModel(nn.Module):
         raise NotImplementedError
 
 # [HACK] The following is a copy of the MLP module from the original code [TODO find a way to import]
+# TODO support transformer
 class MLP(nn.Module):
     def __init__(self, source_emb_dim: int, target_emb_dim: int,
                  n_hidden_layers: int = 0,
