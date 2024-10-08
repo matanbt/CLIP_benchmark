@@ -24,7 +24,6 @@ def load_experimental_models(
     # Load the multi-modal model (e.g., CLIP)
     target_emb_model_name = metadata['dataset_metadata']['target_emb_model_name']
     assert target_emb_model_name == 'openai/clip-vit-large-patch14', "Only CLIP is supported for now"
-    # target_emb_model_name = 'openai/clip-vit-large-patch14'  # [HACK] TODO remove
     from transformers import CLIPModel, CLIPProcessor
     target_model = CLIPModel.from_pretrained(target_emb_model_name)
     target_model.to(device)
@@ -37,15 +36,26 @@ def load_experimental_models(
     source_tokenizer = source_model.tokenizer
 
     # Load aligner
-    aligner_model = MLP(**metadata['model_kwargs'])  # TODO generalize the class (MLP) with `model_class_name`
-    aligner_model.load_state_dict(torch.load(os.path.join(model_dir, "best_model.pt")))
+    from .my_models import initialize_aligner_model
+    aligner_model = initialize_aligner_model(**metadata['model_kwargs'])
+    aligner_model.load_state_dict(torch.load(os.path.join(model_dir, "best_model.pt"),
+                                             map_location=torch.device(device)))
     aligner_model.eval()
     aligner_model.to(device)
+
+    # Select text tokenizer:
+    if model_type.startswith('source') and 'glove' in source_emb_model_name:
+        import transformers
+        text_tokenizer = lambda x: transformers.tokenization_utils_base.BatchEncoding(source_model.tokenize(x))
+    elif model_type.startswith('source'):
+        text_tokenizer = partial(tokenize, tokenizer=source_tokenizer)
+    else:  # model_type == 'target'
+        text_tokenizer = partial(tokenize, tokenizer=target_tokenizer)
 
     return (
         CombinedModel(source_model, target_model, aligner_model, model_type),
         partial(transform, target_processor=target_processor),
-        partial(tokenize, tokenizer=target_tokenizer if model_type == 'target' else source_tokenizer)
+        text_tokenizer
     )
 
 
