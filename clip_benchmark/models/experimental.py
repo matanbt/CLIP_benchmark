@@ -32,8 +32,21 @@ def load_experimental_models(
 
     # Load the source uni-modal model (e.g., E5 text-encoder)
     source_emb_model_name = metadata['dataset_metadata']['source_emb_model_name']
-    source_model = SentenceTransformer(source_emb_model_name, device=device)
-    source_tokenizer = source_model.tokenizer
+
+    if source_emb_model_name == 'random':
+        emb_dim = 768
+        from transformers import BertTokenizer
+        source_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+        embedding_mat = torch.load(f'random_embeddings_{emb_dim}.pt')
+
+        def source_model(inputs):
+            embs = embedding_mat[inputs['input_ids']].mean(dim=1)  # average over tokens within each sequence (pooling)
+            embs = torch.nn.functional.normalize(embs, dim=-1)
+            return {'sentence_embedding': embs}  # imitates SeT's API
+
+    else:  # model is loadable with SeT
+        source_model = SentenceTransformer(source_emb_model_name, device=device)
+        source_tokenizer = source_model.tokenizer
 
     # Load aligner
     from .my_models import initialize_aligner_model
@@ -95,57 +108,7 @@ class CombinedModel(nn.Module):
             return self.aligner_model(emb)
 
     def encode_image(self, x):
-        # target model will always embed the image
-        # img = x['pixel_values']
-        # Ensure the input tensor has the correct shape
-        # if len(img.shape) == 5 and img.shape[1] == 1:
-        #     img = img.squeeze(1)  # Remove the extra dimension
-        # x['pixel_values'] = img
-
         return self.target_model.get_image_features(pixel_values=x)
 
     def forward(self, x):
         raise NotImplementedError
-
-# [HACK] The following is a copy of the MLP module from the original code [TODO find a way to import]
-# TODO support transformer
-class MLP(nn.Module):
-    def __init__(self, source_emb_dim: int, target_emb_dim: int,
-                 n_hidden_layers: int = 0,
-                 hidden_dim: int = None, **kwargs):
-        """
-
-        :param source_emb_dim: dimension of the source embedding to project
-        :param target_emb_dim: dimension of the target embedding
-        :param n_hidden_layers: model's hidden layer count. `0` means linear projection.
-        :param hidden_dim: hidden layer's dimension. Must be specified if `n_hidden_layers > 0`.
-        """
-        super(MLP, self).__init__()
-        self.model_kwargs = dict(
-            source_emb_dim=source_emb_dim,
-            target_emb_dim=target_emb_dim,
-            n_hidden_layers=n_hidden_layers,
-            hidden_dim=hidden_dim,
-            model_class_name=self.__class__.__name__
-        )
-        layers = []
-
-        if n_hidden_layers == 0:
-            layers.append(nn.Linear(source_emb_dim, target_emb_dim))
-        else:
-            if hidden_dim is None:
-                raise ValueError("hidden_dim must be specified if hidden_layers > 0")
-
-            layers.append(nn.Linear(source_emb_dim, hidden_dim))
-            layers.append(nn.ReLU())
-
-            for _ in range(n_hidden_layers - 1):
-                layers.append(nn.Linear(hidden_dim, hidden_dim))
-                layers.append(nn.ReLU())
-
-            layers.append(nn.Linear(hidden_dim, target_emb_dim))
-
-        self.model = nn.Sequential(*layers)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.model(x)
