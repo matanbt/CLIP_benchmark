@@ -33,7 +33,7 @@ def load_experimental_models(
     # Load the source uni-modal model (e.g., E5 text-encoder)
     source_emb_model_name = metadata['dataset_metadata']['source_emb_model_name']
 
-    if source_emb_model_name == 'random':
+    if source_emb_model_name == 'random_embeddings':
         emb_dim = 768
         from transformers import BertTokenizer
         source_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
