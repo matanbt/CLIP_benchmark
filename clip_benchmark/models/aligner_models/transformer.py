@@ -20,10 +20,6 @@ you need and (3) GPT2 implementation from scratch by Andrej Karpathy
 """
 
 
-# TODO base it on https://github.com/huggingface/transformers/blob/main/src/transformers/models/bert/modeling_bert.py
-# TODO also on https://github.com/rmokady/CLIP_prefix_caption/blob/main/train.py
-# FOLLOW https://github.com/rmokady/CLIP_prefix_caption/blob/1ad805a844a62ab2e5480479aa021bccf0d4d12a/train.py#L203
-#       where they reshape the input representation, so it will be a multi-vecotr (input to transformer)
 class CausalSelfAttention(nn.Module):
     """ Attention sublayer, as described in Attention paper
     (differ from GPT2's by: not having dropout on the attention matrix and at the end; attending to all tokens)"""

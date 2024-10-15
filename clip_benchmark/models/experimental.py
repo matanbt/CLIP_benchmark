@@ -37,7 +37,7 @@ def load_experimental_models(
         emb_dim = 768
         from transformers import BertTokenizer
         source_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-        embedding_mat = torch.load(f'random_embeddings_{emb_dim}.pt')
+        embedding_mat = torch.load(f'random_embeddings_{emb_dim}.pt').to(device)
 
         def source_model(inputs):
             embs = embedding_mat[inputs['input_ids']].mean(dim=1)  # average over tokens within each sequence (pooling)
