@@ -49,7 +49,7 @@ def load_experimental_models(
         source_tokenizer = source_model.tokenizer
 
     # Load aligner
-    from .my_models import initialize_aligner_model
+    from .aligner_models import initialize_aligner_model
     aligner_model = initialize_aligner_model(**metadata['model_kwargs'])
     aligner_model.load_state_dict(torch.load(os.path.join(model_dir, "best_model.pt"),
                                              map_location=torch.device(device)))
